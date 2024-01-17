@@ -9,11 +9,38 @@ import { ModelType } from "../store";
 import BotIcon from "../icons/bot.svg";
 import BlackBotIcon from "../icons/black-bot.svg";
 
+var emojiUrlIndex = -1;
+var emojiUrlList = [
+  (unified: string, style: EmojiStyle) => {
+    return `https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/${style}/64/${unified}.png`;
+  },
+  (unified: string, style: EmojiStyle) => {
+    return `https://fastly.jsdelivr.net/npm/emoji-datasource-apple/img/${style}/64/${unified}.png`;
+  },
+]
+
 export function getEmojiUrl(unified: string, style: EmojiStyle) {
   // Whoever owns this Content Delivery Network (CDN), I am using your CDN to serve emojis
   // Old CDN broken, so I had to switch to this one
   // Author: https://github.com/H0llyW00dzZ
-  return `https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/${style}/64/${unified}.png`;
+
+  // statically test the url is reachable
+  if (emojiUrlIndex === -1) {
+    for (let i = 0; i < emojiUrlList.length; i++) {
+      let url = emojiUrlList[i](unified, style);
+      let xhr = new XMLHttpRequest();
+      xhr.open("GET", url, false);
+      xhr.send();
+      if (xhr.status === 200) {
+        emojiUrlIndex = i;
+        break;
+      }
+    }
+  }
+  if (emojiUrlIndex === -1) {
+    emojiUrlIndex = 0;
+  }
+  return emojiUrlList[emojiUrlIndex](unified, style);
 }
 
 export function AvatarPicker(props: {
